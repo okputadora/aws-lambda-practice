@@ -2,6 +2,8 @@
 const moment = require('moment')
 const Wunderground = require('node-weatherunderground')
 const Promise = require('bluebird')
+const Prediction = require('../models/Prediction')
+const mongoose = require('mongoose')
 module.exports = {
   get: (params) => {
     console.log("in utils")
@@ -37,7 +39,20 @@ module.exports = {
           timeOfPrediction: currentTime,
           forecasts: forecasts
         }
-        resolve(prediction)
+        mongoose.connect(process.env.MONGODB_URI, function(err, res){
+          if (err){
+            console.log('DB CONNECTION FAILED: '+err)
+            return;
+          }
+          Prediction.create(prediction, (err, prediction) => {
+            if (err){
+              console.log('couldnt create')
+              reject(err)
+              return
+            }
+            resolve(prediction)
+          })
+        })
       })
     })
   }
